@@ -5,29 +5,41 @@
 #include <vector>
 
 #include "process.h"
+#include "linux_parser.h"
 
 using std::string;
 using std::to_string;
 using std::vector;
 
-// TODO: Return this process's ID
-int Process::Pid() { return 0; }
+// DONE: Return this process's ID
+int Process::Pid() const { return this->pid_; }
 
-// TODO: Return this process's CPU utilization
-float Process::CpuUtilization() { return 0; }
+void Process::Pid(int pid) { this->pid_ = pid; }
 
-// TODO: Return the command that generated this process
-string Process::Command() { return string(); }
+// DONE: Return this process's CPU utilization
+float Process::CpuUtilization() { 
+  this->lastUtil_ = LinuxParser::CpuUtilization(this->pid_);
+  return this->lastUtil_;
+}
 
-// TODO: Return this process's memory utilization
-string Process::Ram() { return string(); }
+float Process::LastUtil() const { return this->lastUtil_; }
 
-// TODO: Return the user (name) that generated this process
-string Process::User() { return string(); }
+// DONE: Return the command that generated this process
+string Process::Command() const { return this->cmd_; }
 
-// TODO: Return the age of this process (in seconds)
-long int Process::UpTime() { return 0; }
+void Process::Command(const string& cmd) { this->cmd_ = cmd; }
 
-// TODO: Overload the "less than" comparison operator for Process objects
+// DONE: Return this process's memory utilization
+string Process::Ram() const { return LinuxParser::Ram(this->pid_); }
+
+// DONE: Return the user (name) that generated this process
+string Process::User() const { return this->user_; }
+
+void Process::User(const string& user) { this->user_ = user; }
+
+// DONE: Return the age of this process (in seconds)
+long int Process::UpTime() const { return LinuxParser::UpTime(this->pid_); }
+
+// DONE: Overload the "less than" comparison operator for Process objects
 // REMOVE: [[maybe_unused]] once you define the function
-bool Process::operator<(Process const& a[[maybe_unused]]) const { return true; }
+bool Process::operator<(Process const& a) const { return this->lastUtil_ < a.LastUtil(); }

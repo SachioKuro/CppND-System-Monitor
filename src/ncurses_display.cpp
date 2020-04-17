@@ -3,6 +3,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <algorithm>
 
 #include "format.h"
 #include "ncurses_display.h"
@@ -53,7 +54,8 @@ void NCursesDisplay::DisplaySystem(System& system, WINDOW* window) {
 }
 
 void NCursesDisplay::DisplayProcesses(std::vector<Process>& processes,
-                                      WINDOW* window, int n) {
+                                      WINDOW* window, int n, int m) {
+  std::sort(processes.begin(), processes.end(), [](Process a, Process b) { return a < b; });
   int row{0};
   int const pid_column{2};
   int const user_column{9};
@@ -70,6 +72,15 @@ void NCursesDisplay::DisplayProcesses(std::vector<Process>& processes,
   mvwprintw(window, row, command_column, "COMMAND");
   wattroff(window, COLOR_PAIR(2));
   for (int i = 0; i < n; ++i) {
+    mvwprintw(window, ++row, pid_column, "");
+    mvwprintw(window, row, user_column, "");
+    mvwprintw(window, row, cpu_column, "");
+    mvwprintw(window, row, ram_column, "");
+    mvwprintw(window, row, time_column, "");
+    mvwprintw(window, row, command_column, "");
+  }
+  row = 1;
+  for (int i = 0; i < m; ++i) {
     mvwprintw(window, ++row, pid_column, to_string(processes[i].Pid()).c_str());
     mvwprintw(window, row, user_column, processes[i].User().c_str());
     float cpu = processes[i].CpuUtilization() * 100;
@@ -94,12 +105,15 @@ void NCursesDisplay::Display(System& system, int n) {
       newwin(3 + n, x_max - 1, system_window->_maxy + 1, 0);
 
   while (1) {
+    auto processes = system.Processes();
+    int processes_size = processes.size();
+    int m = (n < processes_size) ? n : processes_size;
     init_pair(1, COLOR_BLUE, COLOR_BLACK);
     init_pair(2, COLOR_GREEN, COLOR_BLACK);
     box(system_window, 0, 0);
     box(process_window, 0, 0);
     DisplaySystem(system, system_window);
-    DisplayProcesses(system.Processes(), process_window, n);
+    DisplayProcesses(processes, process_window, n, m);
     wrefresh(system_window);
     wrefresh(process_window);
     refresh();
